@@ -10,7 +10,7 @@ terraform {
 
 # alias
 resource "aws_iam_account_alias" "this" {
-  account_alias = "cloudly-engineer-master"
+  account_alias = var.aws_account_alias
 }
 
 # deactivate endpoints
