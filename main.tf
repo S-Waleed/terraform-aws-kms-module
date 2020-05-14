@@ -34,6 +34,9 @@ resource "aws_s3_account_public_access_block" "this" {
 }
 
 # ec2 volume encryption
+resource "aws_ebs_encryption_by_default" "this" {
+  enabled = true
+}
 
 # cloud trail settings
 # deactivate endpoints
