@@ -25,7 +25,13 @@ resource "aws_iam_account_password_policy" "this" {
   allow_users_to_change_password = true
 }
 
-# s3 settings
+# S3 Public settings
+resource "aws_s3_account_public_access_block" "this" {
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
 
 # ec2 volume encryption
 
