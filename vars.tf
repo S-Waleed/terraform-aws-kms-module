@@ -2,6 +2,8 @@ variable aws_region {
   default = "us-east-1"
 }
 
+variable aws_cli_profile {}
+
 variable description {}
 
 # Options available
