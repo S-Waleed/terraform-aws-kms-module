@@ -6,6 +6,78 @@ Terraform module which creates KMS key and the key alias resources on AWS.
 
 ``` hcl
 
+data "aws_iam_policy_document" "ssm_key" {
+  statement {
+    sid       = "Enable IAM User Permissions"
+    effect    = "Allow"
+    actions   = ["kms:*"]
+    resources = ["*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${local.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid       = "Allow access for Key Administrators"
+    effect    = "Allow"
+    actions   = ["kms:*"]
+    resources = ["*"]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${local.account_id}:user/${local.admin_username}"
+      ]
+    }
+  }
+
+  statement {
+    sid    = "Allow use of the key"
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${local.account_id}:user/${local.admin_username}"
+      ]
+    }
+  }
+
+  statement {
+    sid    = "Allow attachment of persistent resources"
+    effect = "Allow"
+    actions = [
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant"
+    ]
+    resources = ["*"]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${local.account_id}:user/${local.admin_username}"
+      ]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = ["true"]
+    }
+  }
+}
+
 module "ssm" {
   source = "git@github.com:masterwali/terraform-aws-kms.git"
 
@@ -20,6 +92,7 @@ module "ssm" {
 }
 
 ```
+
 ## Requirements
 
 | Name | Version |
@@ -49,20 +122,19 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_description"></a> [description](#input_description) | The description of the key as viewed in AWS console. | `string` | `""` | yes |
-| <a name="input_key_spec"></a> [key_spec](#input_key_spec) | Assign IPv6 address on subnet, must be disabled to change IPv6 CIDRs. This is the IPv6 equivalent of map\_public\_ip\_on\_launch | `bool` | `false` | no |
-| <a name="input_enabled"></a> [enabled](#input\enabled) | A list of availability zones names or ids in the region | `list(string)` | `[]` | no |
-| <a name="input_rotation_enabled"></a> [rotation_enabled](#input\_rotation_enabled) | The CIDR block for the VPC. Default value is a valid CIDR, but not acceptable by AWS and should be overridden | `string` | `"0.0.0.0/0"` | no |
-| <a name="input_rotation_tags"></a> [tags](#input\_tags) | The CIDR block for the VPC. Default value is a valid CIDR, but not acceptable by AWS and should be overridden | `string` | `"0.0.0.0/0"` | no |
-| <a name="input_policy"></a> [policy](#input\_policy) | The CIDR block for the VPC. Default value is a valid CIDR, but not acceptable by AWS and should be overridden | `string` | `"0.0.0.0/0"` | no |
-| <a name="input_alias"></a> [alias](#input\_alias) | The CIDR block for the VPC. Default value is a valid CIDR, but not acceptable by AWS and should be overridden | `string` | `"0.0.0.0/0"` | no |
+| <a name="input_key_spec"></a> [key_spec](#input_key_spec) | Specifies whether the key contains a symmetric key or an asymmetric key pair and the encryption algorithms or signing algorithms that the key supports. Valid values: SYMMETRIC_DEFAULT, RSA_2048, RSA_3072, RSA_4096, ECC_NIST_P256, ECC_NIST_P384, ECC_NIST_P521, or ECC_SECG_P256K1 | `string` | `SYMMETRIC_DEFAULT` | no |
+| <a name="input_enabled"></a> [enabled](#input\enabled) | Specifies whether the key is enabled.  | `bool` | `true` | no |
+| <a name="input_rotation_enabled"></a> [rotation_enabled](#input\_rotation_enabled) | Specifies whether key rotation is enabled. | `bool` | `true` | no |
+| <a name="input_rotation_tags"></a> [tags](#input\_tags) | A map of tags to assign to the key. | `map` | `""` | yes |
+| <a name="input_policy"></a> [policy](#input\_policy) | A valid policy JSON document. This is a key policy, not an IAM policy. | `string` | `""` | yes |
+| <a name="input_alias"></a> [alias](#input\_alias) | The display name of the key. | `string` | `""` | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_azs"></a> [azs](#output\_azs) | A list of availability zones specified as argument to this module |
-| <a name="output_cgw_arns"></a> [cgw\_arns](#output\_cgw\_arns) | List of ARNs of Customer Gateway |
-| <a name="output_cgw_ids"></a> [cgw\_ids](#output\_cgw\_ids) | List of IDs of Customer Gateway |
+| <a name="output_key_id"></a> [key_id](#output\_key_id) | The globally unique identifier for the key. |
+| <a name="output_key_arn"></a> [key\_arn](#output\_key_arn) | The Amazon Resource Name (ARN) of the key. |
 
 ## Authors
 
